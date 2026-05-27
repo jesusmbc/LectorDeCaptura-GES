@@ -9,7 +9,7 @@ GO
 */
 
 DECLARE @ApiKeyValue VARCHAR(128);
-SET @ApiKeyValue = '0NyZT3bdNqPwRd5ded4BNc3soC6GLz7QnZDepKXiY';
+SET @ApiKeyValue = 'test_key';
 
 IF EXISTS (SELECT 1 FROM dbo.GES_ApiKeys WHERE ApiKeyValue = @ApiKeyValue)
 BEGIN
