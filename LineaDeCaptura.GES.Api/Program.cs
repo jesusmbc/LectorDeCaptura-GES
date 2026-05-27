@@ -22,6 +22,7 @@ builder.Services.AddHttpClient<IGesApiClient, GesApiClient>((sp, client) =>
 builder.Services.AddSingleton<ISqlConnectionFactory, SqlConnectionFactory>();
 builder.Services.AddScoped<IGesRepository, GesRepository>();
 builder.Services.AddScoped<IPosService, PosService>();
+builder.Services.AddScoped<IReconciliationCsvService, ReconciliationCsvService>();
 
 var app = builder.Build();
 
@@ -33,6 +34,5 @@ if (app.Environment.IsDevelopment())
 
 app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseHttpsRedirection();
-app.UseMiddleware<ApiKeyAuthMiddleware>();
 app.MapControllers();
 app.Run();

@@ -23,4 +23,5 @@ public interface IGesRepository
     Task InsertOperationLogAsync(Guid? transactionGuid, string? gesTraceId, string severity, string source, string eventCode, string message, string? exceptionDetail, string? requestPath, string? httpMethod, string? remoteIp, CancellationToken cancellationToken);
     Task<string?> TryGetIdempotentResponseAsync(Guid transactionGuid, string messageType, CancellationToken cancellationToken);
     Task SaveIdempotentResponseAsync(Guid transactionGuid, string messageType, string responseStatusCode, string responseBodyJson, bool isSuccess, CancellationToken cancellationToken);
+    Task<IReadOnlyList<ReconciliationCsvRow>> GetReconciliationRowsAsync(DateTime fechaInicio, DateTime fechaFin, CancellationToken cancellationToken);
 }

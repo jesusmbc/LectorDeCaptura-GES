@@ -9,10 +9,12 @@ namespace LineaDeCaptura.GES.Api.Controllers;
 public sealed class PosController : ControllerBase
 {
     private readonly IPosService _service;
+    private readonly IReconciliationCsvService _reconciliationCsvService;
 
-    public PosController(IPosService service)
+    public PosController(IPosService service, IReconciliationCsvService reconciliationCsvService)
     {
         _service = service;
+        _reconciliationCsvService = reconciliationCsvService;
     }
 
     [HttpPost("debt-inquiry")]
@@ -41,5 +43,23 @@ public sealed class PosController : ControllerBase
             cancellationToken);
 
         return Ok(response);
+    }
+
+    [HttpGet("reconciliation-csv")]
+    [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetReconciliationCsv([FromQuery] ReconciliationCsvQuery query, CancellationToken cancellationToken)
+    {
+        if (query.FechaInicio == default || query.FechaFin == default)
+        {
+            return BadRequest("fechaInicio y fechaFin son requeridas en formato yyyy-MM-dd.");
+        }
+
+        if (query.FechaInicio.Date > query.FechaFin.Date)
+        {
+            return BadRequest("fechaInicio no puede ser mayor que fechaFin.");
+        }
+
+        var (content, fileName) = await _reconciliationCsvService.GenerateAsync(query.FechaInicio.Date, query.FechaFin.Date, cancellationToken);
+        return File(content, "text/csv", fileName);
     }
 }

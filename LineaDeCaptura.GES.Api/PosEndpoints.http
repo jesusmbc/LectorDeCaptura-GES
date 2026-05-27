@@ -31,3 +31,7 @@ Content-Type: application/json
   "ticketNumber": "TCK-045-070-0008891",
   "ticketTimestamp": "2026-05-26T11:24:05-07:00"
 }
+
+### Reconciliation CSV
+GET {{baseUrl}}/api/pos/reconciliation-csv?fechaInicio=2026-05-01&fechaFin=2026-05-07
+apikey: {{apiKey}}
