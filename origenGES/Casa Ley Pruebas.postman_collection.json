@@ -1,0 +1,201 @@
+{
+  "info": {
+    "_postman_id": "be7fcfbc-17a1-4d93-9799-d2d2deeb93c1",
+    "name": "Casa Ley Pruebas",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "1429811",
+    "_collection_link": "https://go.postman.co/collection/1429811-be7fcfbc-17a1-4d93-9799-d2d2deeb93c1?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Micros",
+      "item": [
+        {
+          "name": "suac",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "// Convertir XML a objeto JSON\r",
+                  "let responseJson = xml2Json(pm.response.text());\r",
+                  "\r",
+                  "// Navegar dentro del SOAP\r",
+                  "let comprobante = responseJson[\"soap:Envelope\"]\r",
+                  "    [\"soap:Body\"]\r",
+                  "    [\"GenerarComprobanteDepositoResponse\"]\r",
+                  "    [\"GenerarComprobanteDepositoResult\"]\r",
+                  "    [\"ComprobanteDeposito\"];\r",
+                  "\r",
+                  "// Obtener valores\r",
+                  "let folio = comprobante[\"Folio\"];\r",
+                  "let codigoBarras = comprobante[\"CodigoBarrasOXXO\"];\r",
+                  "\r",
+                  "// Guardar variables de entorno\r",
+                  "pm.environment.set(\"folio\", folio);\r",
+                  "pm.environment.set(\"lineacaptura\", codigoBarras);\r",
+                  "\r",
+                  "// Validaciones opcionales\r",
+                  "pm.test(\"Existe Folio\", function () {\r",
+                  "    pm.expect(folio).to.not.be.undefined;\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Existe CodigoBarrasOXXO\", function () {\r",
+                  "    pm.expect(codigoBarras).to.not.be.undefined;\r",
+                  "});\r",
+                  "\r",
+                  "console.log(\"Folio:\", folio);\r",
+                  "console.log(\"Codigo:\", codigoBarras);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "User-Agent",
+                "value": "Requestly/1.0"
+              },
+              {
+                "key": "content-type",
+                "value": "text/xml"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<soap:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n  <soap:Body>\n    <GenerarComprobanteDeposito xmlns=\"http://sinaloa.gob.mx/wsges\">\n      <ClaveConcepto>11</ClaveConcepto>\n      <DescripcionConcepto>CERTIFICADO DEL NOMBRE DEL PROPIETARIO</DescripcionConcepto>\n      <ClaveOrganismo>5</ClaveOrganismo>\n      <DescripcionOrganismo>GOBIERNO DEL ESTADO DE SINALOA</DescripcionOrganismo>\n      <ClaveDependencia>5</ClaveDependencia>\n      <DescripcionDependencia>CATASTRO</DescripcionDependencia>\n      <Importe>38</Importe>\n      <ClaveUsuario>3</ClaveUsuario>\n      <DescripcionUsuario>admin</DescripcionUsuario>\n      <OficinaRecaudadora>070</OficinaRecaudadora>\n      <Oficialia>070</Oficialia>\n      <NombreSolicitante>yabin diaz</NombreSolicitante>\n    </GenerarComprobanteDeposito>\n  </soap:Body>\n</soap:Envelope>",
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://apiges.sinaloa.gob.mx/wsgessuac/comprobantes.asmx",
+              "protocol": "https",
+              "host": [
+                "apiges",
+                "sinaloa",
+                "gob",
+                "mx"
+              ],
+              "path": [
+                "wsgessuac",
+                "comprobantes.asmx"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Casa Ley",
+      "item": [
+        {
+          "name": "DebtInquiryAsync",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "pm.test(\"El campo data.transactionGuid existe\", function () {\r",
+                  "    let jsonData = pm.response.json();\r",
+                  "\r",
+                  "    pm.expect(jsonData).to.have.property(\"transactionGuid\");\r",
+                  "\r",
+                  "    pm.environment.set(\"guid\", jsonData.transactionGuid);     \r",
+                  "    pm.environment.set(\"importe\", jsonData.paymentContext.amount);     \r",
+                  "});\r",
+                  "\r",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "apikey",
+                "value": "0NyZT3bdNqPwRd5ded4BNc3soC6GLz7QnZDepKXiY",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"messageType\": \"DebtInquiryRequest\",\r\n  \"transactionGuid\": \"{{$guid}}\",\r\n  \"requestTimestamp\": \"2026-05-20T14:51:10-07:00\",\r\n  \"channel\": \"POS\",\r\n  \"commerce\": {\r\n    \"storeId\": \"LEY-045\",\r\n    \"cashRegister\": \"CAJA-07\",\r\n    \"cashierId\": \"CJR-1024\"\r\n  },\r\n  \"captureLine\": \"{{lineacaptura}}\",\r\n  \"serviceHint\": {\r\n    \"serviceCode\": \"LIC-REN-2Y\",\r\n    \"serviceName\": \"Renovación de Licencia (2 Años)\"\r\n  }\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/api/CasaLey/DebtInquiryRequest",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "api",
+                "CasaLey",
+                "DebtInquiryRequest"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PaymentApplyRequest",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "apikey",
+                "value": "0NyZT3bdNqPwRd5ded4BNc3soC6GLz7QnZDepKXiY",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"messageType\": \"PaymentApplyRequest\",\r\n  \"transactionGuid\": \"{{guid}}\",\r\n  \"requestTimestamp\": \"2026-05-25T15:03:05-07:00\",\r\n  \"gesTraceId\": \"GES-TRX-20260526-1779811684565\",\r\n  \"commerce\": {\r\n    \"storeId\": \"LEY-045\",\r\n    \"cashRegister\": \"CAJA-07\",\r\n    \"cashierId\": \"CJR-1024\"\r\n  },\r\n  \"captureLine\": \"{{lineacaptura}}\",\r\n  \"amount\": {{importe}},\r\n  \"currency\": \"MXN\",\r\n  \"paymentMethod\": \"CASH\",\r\n  \"houseTicket\": {\r\n    \"ticketNumber\": \"TCK-045-070-0008891\",\r\n    \"ticketTimestamp\": \"2026-05-11T15:03:03-07:00\"\r\n  }\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/api/CasaLey/PaymentApplyRequest",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "api",
+                "CasaLey",
+                "PaymentApplyRequest"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

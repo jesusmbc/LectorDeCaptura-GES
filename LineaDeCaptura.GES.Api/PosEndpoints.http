@@ -1,0 +1,33 @@
+@baseUrl = https://localhost:7001
+@apiKey = 0NyZT3bdNqPwRd5ded4BNc3soC6GLz7QnZDepKXiY
+
+### Debt Inquiry
+POST {{baseUrl}}/api/pos/debt-inquiry
+apikey: {{apiKey}}
+Content-Type: application/json
+
+{
+  "captureLine": "07001974047064739208",
+  "storeId": "LEY-045",
+  "cashRegister": "CAJA-07",
+  "cashierId": "CJR-1024"
+}
+
+### Payment Apply
+POST {{baseUrl}}/api/pos/payment-apply
+apikey: {{apiKey}}
+Content-Type: application/json
+
+{
+  "transactionGuid": "1e9d71a6-f894-4257-8712-2bef846e1c89",
+  "gesTraceId": "GES-TRX-20260526-1779819807759",
+  "captureLine": "07001974047064739208",
+  "amount": 38.0,
+  "currency": "MXN",
+  "paymentMethod": "CASH",
+  "storeId": "LEY-045",
+  "cashRegister": "CAJA-07",
+  "cashierId": "CJR-1024",
+  "ticketNumber": "TCK-045-070-0008891",
+  "ticketTimestamp": "2026-05-26T11:24:05-07:00"
+}

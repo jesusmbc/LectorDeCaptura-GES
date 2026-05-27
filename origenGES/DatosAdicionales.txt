@@ -1,0 +1,15 @@
+buen dia:
+
+adjunto la colecciones de postman para el servicio
+
+la url base del servicio es la siguiente:
+https://apiges.sinaloa.gob.mx/casaleydesarrollo
+
+esta versión se espera un header llamado
+apikey  con el valor  0NyZT3bdNqPwRd5ded4BNc3soC6GLz7QnZDepKXiY 
+apikey: 0NyZT3bdNqPwRd5ded4BNc3soC6GLz7QnZDepKXiY  
+
+
+quedamos atentos a cualquier duda o comentario
+
+saludos

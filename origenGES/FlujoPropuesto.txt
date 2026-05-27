@@ -1,0 +1,151 @@
+Documento Final — Flujo de Transacción GES + Casa Ley (v1)
+Fecha: 2026-05-11
+Autor: OpenClaw Assistant
+
+1) Resumen Ejecutivo
+La llave de correlación del ciclo es transactionGuid (UUID único por intento).
+La línea de captura viaja como dato de negocio (captureLine), escaneada en POS.
+Identidad de origen en caja: storeId + cashRegister + cashierId.
+Flujo compacto en 3 fases: Inquiry → Apply → Commit.
+Monto viene de GES y no se edita en POS.
+Ticket Casa Ley y autorización GES son obligatorios en pago.
+2) Flujo JSON completo (sin requestId)
+2.1 DebtInquiryRequest (Casa Ley → GES)
+{
+  "messageType": "DebtInquiryRequest",
+  "transactionGuid": "2c9f8e96-6d2a-4f80-a6a5-5e0b4b71c101",
+  "requestTimestamp": "2026-05-11T15:02:10-07:00",
+  "channel": "POS",
+  "commerce": {
+    "storeId": "LEY-045",
+    "cashRegister": "CAJA-07",
+    "cashierId": "CJR-1024"
+  },
+  "captureLine": "030240000123456789012345678901",
+  "serviceHint": {
+    "serviceCode": "LIC-REN-2Y",
+    "serviceName": "Renovación de Licencia (2 Años)"
+  }
+}
+2.2 DebtInquiryResponse (GES → Casa Ley)
+{
+  "messageType": "DebtInquiryResponse",
+  "transactionGuid": "2c9f8e96-6d2a-4f80-a6a5-5e0b4b71c101",
+  "gesTraceId": "GES-TRX-20260511-900001",
+  "status": "OK",
+  "statusCode": "00",
+  "statusMessage": "Consulta exitosa",
+  "gesProcessedAt": "2026-05-11T15:02:11-07:00",
+  "paymentContext": {
+    "captureLine": "030240000123456789012345678901",
+    "serviceCode": "LIC-REN-2Y",
+    "serviceName": "Renovación de Licencia (2 Años)",
+    "amount": 1875.5,
+    "currency": "MXN",
+    "dueDate": "2026-05-31"
+  },
+  "contributor": {
+    "fullName": "JUAN PEREZ SALAZAR",
+    "reference": "BEMJ800101HSLTRS09"
+  }
+}
+2.3 PaymentApplyRequest (Casa Ley → GES)
+{
+  "messageType": "PaymentApplyRequest",
+  "transactionGuid": "2c9f8e96-6d2a-4f80-a6a5-5e0b4b71c101",
+  "requestTimestamp": "2026-05-11T15:03:05-07:00",
+  "gesTraceId": "GES-TRX-20260511-900001",
+  "commerce": {
+    "storeId": "LEY-045",
+    "cashRegister": "CAJA-07",
+    "cashierId": "CJR-1024"
+  },
+  "captureLine": "030240000123456789012345678901",
+  "amount": 1875.5,
+  "currency": "MXN",
+  "paymentMethod": "CASH",
+  "houseTicket": {
+    "ticketNumber": "TCK-045-070-0008891",
+    "ticketTimestamp": "2026-05-11T15:03:03-07:00"
+  }
+}
+2.4 PaymentApplyResponse (GES → Casa Ley)
+{
+  "messageType": "PaymentApplyResponse",
+  "transactionGuid": "2c9f8e96-6d2a-4f80-a6a5-5e0b4b71c101",
+  "gesTraceId": "GES-TRX-20260511-900001",
+  "status": "APPLIED",
+  "statusCode": "00",
+  "statusMessage": "Pago aplicado correctamente",
+  "gesProcessedAt": "2026-05-11T15:03:06-07:00",
+  "authorization": "AUT-GES-20260511-778899",
+  "officialReceipt": {
+    "receiptFolio": "GES-RCPT-20260511-334455"
+  }
+}
+2.5 PaymentCommitRequest (Casa Ley → GES)
+{
+  "messageType": "PaymentCommitRequest",
+  "transactionGuid": "2c9f8e96-6d2a-4f80-a6a5-5e0b4b71c101",
+  "requestTimestamp": "2026-05-11T15:03:10-07:00",
+  "gesTraceId": "GES-TRX-20260511-900001",
+  "authorization": "AUT-GES-20260511-778899",
+  "houseTicket": {
+    "ticketNumber": "TCK-045-070-0008891",
+    "ticketTimestamp": "2026-05-11T15:03:03-07:00"
+  }
+}
+2.6 PaymentCommitResponse (GES → Casa Ley)
+{
+  "messageType": "PaymentCommitResponse",
+  "transactionGuid": "2c9f8e96-6d2a-4f80-a6a5-5e0b4b71c101",
+  "gesTraceId": "GES-TRX-20260511-900001",
+  "status": "COMMITTED",
+  "statusCode": "00",
+  "statusMessage": "Pago registrado en firme",
+  "gesProcessedAt": "2026-05-11T15:03:11-07:00",
+  "authorization": "AUT-GES-20260511-778899",
+  "ledgerId": "GES-LEDGER-20260511-556677"
+}
+3) Catálogos de valores
+3.1 InquiryStatus (DebtInquiryResponse.status)
+OK | NOT_FOUND | ALREADY_PAID | EXPIRED | INVALID_CAPTURE_LINE | ERROR
+
+3.2 ApplyStatus (PaymentApplyResponse.status)
+APPLIED | REJECTED | ALREADY_PAID | AMOUNT_MISMATCH | INVALID_CAPTURE_LINE | ERROR
+
+3.3 CommitStatus (PaymentCommitResponse.status)
+COMMITTED | ALREADY_COMMITTED | NOT_FOUND | INVALID_AUTHORIZATION | ERROR
+
+3.4 paymentMethod
+CASH | CARD_DEBIT | CARD_CREDIT | MIXED (ajustable según operación real)
+
+4) Tabla de estados (idempotencia y resiliencia)
+Estado actual	Mensaje entrante	Resultado esperado
+Sin registro	DebtInquiryRequest	Crear contexto + responder status de consulta
+INQUIRED	DebtInquiryRequest (reintento mismo transactionGuid)	Respuesta equivalente (idempotente, sin nuevo efecto)
+INQUIRED	PaymentApplyRequest	Intentar aplicación; si ok → APPLIED + authorization
+APPLIED	PaymentApplyRequest (reintento)	Retornar mismo authorization (sin doble cobro)
+APPLIED	PaymentCommitRequest	Registrar en firme → COMMITTED + ledgerId
+COMMITTED	PaymentCommitRequest (reintento)	ALREADY_COMMITTED + mismos datos finales
+5) Reglas de idempotencia
+Clave técnica: transactionGuid + messageType para deduplicar.
+Apply repetido no debe duplicar pago; devuelve la misma autorización.
+Commit repetido no debe duplicar asiento; devuelve ALREADY_COMMITTED.
+Unicidad de negocio: si la línea ya está pagada, responder ALREADY_PAID.
+6) Reglas de resiliencia
+Permitir reintentos ante timeout/red con el mismo transactionGuid.
+Persistir eventos por fase (Inquiry/Apply/Commit) para recuperación.
+Trazabilidad mínima obligatoria: transactionGuid, captureLine, ticketNumber, authorization, ledgerId, timestamps.
+Si hay duda de estado tras fallo de red, reconsultar por transactionGuid antes de reprocesar.
+7) Mini manual operativo (pasos)
+Cajero escanea la línea de captura.
+POS genera transactionGuid y envía consulta.
+GES responde monto oficial y estatus.
+Si estatus es OK, POS cobra sin permitir edición de monto.
+POS emite ticket Casa Ley y envía Apply con folio de ticket.
+GES responde APPLIED con número de autorización.
+POS envía Commit con autorización + ticket.
+GES responde COMMITTED con ledgerId.
+POS guarda evidencias de conciliación.
+Nota: formato/longitud de captureLine queda pendiente para siguiente reunión técnica.
